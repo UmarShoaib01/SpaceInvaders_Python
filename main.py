@@ -1,0 +1,162 @@
+import pygame
+import random
+import math
+pygame.init()
+
+#Creating screen
+screen = pygame.display.set_mode((800,600))
+
+#Background
+background = pygame.image.load('Images/background.png')
+
+
+#Title and Icon for screen
+pygame.display.set_caption("Space Invaders")
+#Load image with icon var and display on screen
+icon = pygame.image.load('Images/Screen_Icon.png')
+pygame.display.set_icon(icon)
+
+
+#Create PLayer Image
+playerImg = pygame.image.load("Images/rocket.png")
+playerX = 370
+playerY = 480
+playerX_change = 0
+
+
+enemyImg = []
+enemyX = []
+enemyY = []
+enemyX_change = []
+enemyY_change = []
+num_of_enemies = 6
+
+for i in range(num_of_enemies):
+    enemyImg.append(pygame.image.load("Images/ufo.png"))
+    enemyX.append(random.randint(0,735))
+    enemyY.append(random.randint(50,150))
+    enemyX_change.append(4)
+    enemyY_change.append(40)
+
+
+
+
+#Create bullet image
+bulletImg = pygame.image.load("Images/bullet.png")
+bulletX = 0
+bulletY = 480
+bulletX_change = 0
+bulletY_change = 10
+
+#Cannot see bullet on screen when in ready state
+bullet_state = "ready"
+
+#Score
+score_counter = 0
+font = pygame.font.Font('freesansbold.ttf',32)
+textX = 10
+textY = 10
+
+def score_display(textX,textY):
+    score = font.render("Score: " + str(score_counter), True, (255,255,255))
+    screen.blit(score, (textX,textY))
+
+def fire_bullet(bulletX,bulletY):
+    global bullet_state
+    bullet_state = "fire"
+    screen.blit(bulletImg,(bulletX + 16 ,bulletY  + 10))
+
+def collision(enemyX, enemyY, bulletX, bulletY):
+    distance = math.sqrt((math.pow(enemyX-bulletX, 2)) + (math.pow(enemyY - bulletY,2)))
+    if distance<27:
+        return True
+    else:
+        return False
+
+
+def player(playerX, playerY):
+    screen.blit(playerImg,(playerX,playerY))
+
+def enemy(enemyX, enemyY, i):
+    screen.blit(enemyImg[i],(enemyX,enemyY))
+
+
+#Variable to break out of the while loop to close the screen
+running = True
+
+#Screen/Game Loop
+while running:
+    #RGB colors to fill screen with a black background
+    screen.fill((0,0,0))
+    #Background image
+    screen.blit(background,(0,0))
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                playerX_change = -5
+            if event.key == pygame.K_RIGHT:
+                playerX_change = 5
+            if event.key == pygame.K_SPACE:
+                if bullet_state is "ready":
+                    # Obtain current x coordinate of spaceship
+                    bulletX =  playerX
+                    fire_bullet(bulletX,bulletY)
+            
+               
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
+                playerX_change = 0
+
+
+    #Boundaries for player
+    playerX += playerX_change
+
+    if playerX <=0:
+        playerX = 0
+    elif playerX >= 736:
+        playerX = 736
+
+
+    for i in range(num_of_enemies):
+        enemyX[i] += enemyX_change[i]
+        if enemyX[i] <=0:
+            enemyX_change[i]= 4
+            enemyY[i] += enemyY_change[i]
+        elif enemyX[i] >= 736:
+            enemyX_change[i] = -4
+            enemyY[i] += enemyY_change[i]
+
+        is_collision = collision(enemyX[i], enemyY[i], bulletX, bulletY)
+        if is_collision:
+            bulletY = 480
+            bullet_state = "ready"
+            score_counter+=1
+            enemyX[i] = random.randint(0, 735)
+            enemyY[i] = random.randint(50, 150)
+
+        enemy(enemyX[i], enemyY[i], i)
+        
+
+
+    #Bullet movement
+
+    if bulletY <=0:
+        bulletY = 480
+        bullet_state = "ready"
+        
+
+
+    if bullet_state is "fire":
+        fire_bullet(bulletX, bulletY)
+        bulletY -= bulletY_change
+
+
+    player(playerX, playerY)
+    score_display(textX,textY)
+    pygame.display.update()
+
+
+
